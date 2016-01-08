@@ -7,8 +7,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 
@@ -43,43 +41,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void postSomething() {
-        final GsonRequest<Void> postRequest = new GsonRequest<Void>(Request.Method.POST, "http://192.168.1.173:8085/api/v1/static", Void.class, new Response.Listener<Void>() {
-            @Override
-            public void onResponse(final Void aVoid) {
-                Log.i(TAG, "success posting message");
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(final VolleyError volleyError) {
-                Log.e(TAG, "error posting message", volleyError);
-            }
-        }) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return "{\"name\":\"Jamie\"}".getBytes();
-            }
-
-            @Override
-            public String getBodyContentType() {
-                return "application/json";
-            }
-        };
+        final GsonRequest<Void> postRequest = new GsonRequest.Post<Void, Person>("http://192.168.1.173:8085/api/v1/static", Person.class, new Person("Janssen"))
+                .successListener(new Response.Listener<Void>() {
+                    @Override
+                    public void onResponse(final Void aVoid) {
+                        Log.i(TAG, "success posting message");
+                    }
+                })
+                .errorListener(new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(final VolleyError volleyError) {
+                        Log.e(TAG, "error posting message", volleyError);
+                    }
+                })
+                .create(Void.class);
 
         VolleyTestApplication.getInstance().addToRequestQueue(postRequest);
     }
 
     private void retrieveStations() {
-        final GsonRequest<StationResponse> request = new GsonRequest<>(Request.Method.GET, STATIONS_URL, StationResponse.class, new Response.Listener<StationResponse>() {
-            @Override
-            public void onResponse(final StationResponse stationResponse) {
-                resultView.setText("" + stationResponse.getItems().size());
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(final VolleyError volleyError) {
-                Toast.makeText(MainActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
-            }
-        });
+        final GsonRequest<StationResponse> request = new GsonRequest.Get<StationResponse>(STATIONS_URL)
+                .successListener(new Response.Listener<StationResponse>() {
+                    @Override
+                    public void onResponse(final StationResponse stationResponse) {
+                        resultView.setText("" + stationResponse.getItems().size());
+                    }
+                })
+                .errorListener(new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(final VolleyError volleyError) {
+                        Toast.makeText(MainActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
+                    }
+                })
+                .create(StationResponse.class);
+
         VolleyTestApplication.getInstance().addToRequestQueue(request);
     }
 }

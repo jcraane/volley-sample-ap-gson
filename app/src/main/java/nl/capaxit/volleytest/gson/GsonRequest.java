@@ -21,7 +21,7 @@ import java.util.Map;
  * Created by jamiecraane on 24/06/15.
  */
 public class GsonRequest<T> extends Request<T> {
-    private final Gson gson = new Gson();
+    private static final Gson GSON = new Gson();
     private final Class<T> clazz;
     private final Response.Listener<T> listener;
     private Map<String, String> headers = new HashMap<>();
@@ -32,15 +32,15 @@ public class GsonRequest<T> extends Request<T> {
      * @param url   URL of the request to make
      * @param clazz Relevant class object, for Gson's reflection
      */
-    public GsonRequest(
+    private GsonRequest(
             final int method,
             final String url,
             final Class<T> clazz,
-            final Response.Listener<T> listener,
+            final Response.Listener<T> successListener,
             final Response.ErrorListener errorListener) {
         super(method, url, errorListener);
         this.clazz = clazz;
-        this.listener = listener;
+        this.listener = successListener;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class GsonRequest<T> extends Request<T> {
                     response.data,
                     HttpHeaderParser.parseCharset(response.headers));
             return Response.success(
-                    gson.fromJson(json, clazz),
+                    GSON.fromJson(json, clazz),
                     HttpHeaderParser.parseCacheHeaders(response));
         } catch (UnsupportedEncodingException e) {
             return Response.error(new ParseError(e));
@@ -74,5 +74,66 @@ public class GsonRequest<T> extends Request<T> {
     @Override
     protected void deliverResponse(T response) {
         listener.onResponse(response);
+    }
+
+    public interface Builder<T> {
+        GsonRequest<T> create(Class<T> clazz);
+    }
+
+    public static abstract class RequestBuilder<T> implements Builder<T> {
+        protected final String url;
+        protected Response.Listener<T> succesListener;
+        protected Response.ErrorListener errorListener;
+
+        public RequestBuilder(final String url) {
+            this.url = url;
+        }
+
+        public RequestBuilder<T> successListener(final Response.Listener<T> successListener) {
+            this.succesListener = successListener;
+            return this;
+        }
+
+        public RequestBuilder<T> errorListener(final Response.ErrorListener errorListener) {
+            this.errorListener = errorListener;
+            return this;
+        }
+    }
+
+    public static class Get<T> extends RequestBuilder<T> {
+        public Get(final String url) {
+            super(url);
+        }
+
+        @Override
+        public GsonRequest<T> create(final Class<T> clazz) {
+            return new GsonRequest<>(Method.GET, url, clazz, succesListener, errorListener);
+        }
+    }
+
+    public static class Post<T, V> extends RequestBuilder<T> {
+        private V body;
+        final Class<V> requestClass;
+
+        public Post(final String url, final Class<V> requestClass, final V body) {
+            super(url);
+            this.requestClass = requestClass;
+            this.body = body;
+        }
+
+        @Override
+        public GsonRequest<T> create(final Class<T> responseClass) {
+            return new GsonRequest<T>(Method.POST, url, responseClass, succesListener, errorListener) {
+                @Override
+                public byte[] getBody() throws AuthFailureError {
+                    return GSON.toJson(body, requestClass).getBytes();
+                }
+
+                @Override
+                public String getBodyContentType() {
+                    return "application/json";
+                }
+            };
+        }
     }
 }
