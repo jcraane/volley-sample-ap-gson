@@ -13,4 +13,10 @@
             android:id="@+id/result"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/postSomething"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Post something"/>
 </LinearLayout>

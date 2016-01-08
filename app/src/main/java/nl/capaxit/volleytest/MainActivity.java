@@ -2,18 +2,23 @@ package nl.capaxit.volleytest;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+
 import nl.capaxit.volleytest.gson.GsonRequest;
 
 /**
  * Created by jamiecraane on 23/06/15.
  */
-public class StationActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
+    private static final String TAG = MainActivity.class.getSimpleName();
     private static final String STATIONS_URL = "http://ews-rpx.ns.nl/private-ns-api/json/v1/stations";
 
     private TextView resultView;
@@ -29,6 +34,38 @@ public class StationActivity extends AppCompatActivity {
             }
         });
         resultView = (TextView) findViewById(R.id.result);
+        findViewById(R.id.postSomething).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                postSomething();
+            }
+        });
+    }
+
+    private void postSomething() {
+        final GsonRequest<Void> postRequest = new GsonRequest<Void>(Request.Method.POST, "http://192.168.1.173:8085/api/v1/static", Void.class, new Response.Listener<Void>() {
+            @Override
+            public void onResponse(final Void aVoid) {
+                Log.i(TAG, "success posting message");
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(final VolleyError volleyError) {
+                Log.e(TAG, "error posting message", volleyError);
+            }
+        }) {
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return "{\"name\":\"Jamie\"}".getBytes();
+            }
+
+            @Override
+            public String getBodyContentType() {
+                return "application/json";
+            }
+        };
+
+        VolleyTestApplication.getInstance().addToRequestQueue(postRequest);
     }
 
     private void retrieveStations() {
@@ -40,7 +77,7 @@ public class StationActivity extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(final VolleyError volleyError) {
-                Toast.makeText(StationActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
             }
         });
         VolleyTestApplication.getInstance().addToRequestQueue(request);

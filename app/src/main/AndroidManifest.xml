@@ -10,7 +10,7 @@
             android:label="@string/app_name"
             android:theme="@style/MyTheme"
             android:icon="@mipmap/ic_launcher">
-        <activity android:name=".StationActivity">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
