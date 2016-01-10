@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void postSomething() {
         final GsonRequest<Void> postRequest = new GsonRequest.Post<Void, Person>("http://192.168.1.173:8085/api/v1/static", Person.class, new Person("Janssen"))
+                //.setGsonBuilder(new GsonBuilder())
                 .successListener(new Response.Listener<Void>() {
                     @Override
                     public void onResponse(final Void aVoid) {
