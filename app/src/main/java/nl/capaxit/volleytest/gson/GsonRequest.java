@@ -7,6 +7,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.UnsupportedEncodingException;
@@ -114,11 +115,18 @@ public class GsonRequest<T> extends Request<T> {
     public static class Post<T, V> extends RequestBuilder<T> {
         private V body;
         final Class<V> requestClass;
+        private GsonBuilder gsonBuilder;
 
         public Post(final String url, final Class<V> requestClass, final V body) {
             super(url);
             this.requestClass = requestClass;
             this.body = body;
+            this.gsonBuilder = null;
+        }
+
+        public RequestBuilder<T> setGsonBuilder(final GsonBuilder gsonBuilder) {
+            this.gsonBuilder = gsonBuilder;
+            return this;
         }
 
         @Override
@@ -126,7 +134,8 @@ public class GsonRequest<T> extends Request<T> {
             return new GsonRequest<T>(Method.POST, url, responseClass, succesListener, errorListener) {
                 @Override
                 public byte[] getBody() throws AuthFailureError {
-                    return GSON.toJson(body, requestClass).getBytes();
+                    Gson gson = gsonBuilder != null ?  gsonBuilder.create() : GSON;
+                    return gson.toJson(body, requestClass).getBytes();
                 }
 
                 @Override
